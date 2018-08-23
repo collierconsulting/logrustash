@@ -193,11 +193,14 @@ func (h *Hook) WithFields(fields logrus.Fields) {
 // If you want wait until message buffer frees – set WaitUntilBufferFrees to true.
 func (h *Hook) Fire(entry *logrus.Entry) error {
 	if h.fireChannel != nil { // Async mode.
+		// Allocate new entry before passing into channel to prevent concurrent map read/write errors
+		copiedEntry := entry.WithFields(logrus.Fields{})
+		copiedEntry.Level = entry.Level
 		select {
-		case h.fireChannel <- entry:
+		case h.fireChannel <- copiedEntry:
 		default:
 			if h.WaitUntilBufferFrees {
-				h.fireChannel <- entry // Blocks the goroutine because buffer is full.
+				h.fireChannel <- copiedEntry // Blocks the goroutine because buffer is full.
 
 				return nil
 			}
