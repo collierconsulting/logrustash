@@ -196,6 +196,7 @@ func (h *Hook) Fire(entry *logrus.Entry) error {
 		// Allocate new entry before passing into channel to prevent concurrent map read/write errors
 		copiedEntry := entry.WithFields(logrus.Fields{})
 		copiedEntry.Level = entry.Level
+		copiedEntry.Message = entry.Message
 		select {
 		case h.fireChannel <- copiedEntry:
 		default:
